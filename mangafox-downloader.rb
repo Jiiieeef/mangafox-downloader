@@ -9,13 +9,17 @@ def get_base_url_chapter url
   "#{url.split('/')[0...-1].join('/')}/"
 end
 
-Dir.mkdir('Death Note') unless File.exists?("Death Note")
+manga_name = ARGV[0]
+manga_name_slug = manga_name.gsub(/\s+/, "_").downcase
+manga = read_url "http://mangafox.me/manga/#{manga_name_slug}"
 
-manga = read_url 'http://mangafox.me/manga/death_note/'
+
+
+Dir.mkdir(manga_name) unless File.exists?(manga_name)
 
 manga.css('.chlist li').reverse.each do |chapter|
   name = chapter.css('.tips')[0].children[0].text
-  Dir.mkdir("Death Note/#{name}") unless File.exists?("Death Note/#{name}")
+  Dir.mkdir("#{manga_name}/#{name}") unless File.exists?("#{manga_name}/#{name}")
   
   chapter = chapter.css('.tips')[0].attributes["href"].value
   base_url_chapter = get_base_url_chapter chapter
@@ -27,7 +31,7 @@ manga.css('.chlist li').reverse.each do |chapter|
     src = page.css('#viewer img#image')[0].attributes["src"].value
     extension = src.split('.')[src.split('.').count - 1]
 
-    open("Death Note/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
+    open("#{manga_name}/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
       p file
       file << open(src).read
     end
