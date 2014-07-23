@@ -39,4 +39,6 @@ if chapters.count > 0
       end
     end
   end
+else
+  p "#{manga_name} not found :("
 end
