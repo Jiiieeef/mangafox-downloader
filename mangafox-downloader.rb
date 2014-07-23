@@ -11,7 +11,7 @@ end
 
 Dir.mkdir('Death Note') unless File.exists?("Death Note")
 
-manga = Nokogiri::XML(open('http://mangafox.me/manga/death_note/').read)
+manga = read_url 'http://mangafox.me/manga/death_note/'
 
 manga.css('.chlist li').reverse.each do |chapter|
   name = chapter.css('.tips')[0].children[0].text
