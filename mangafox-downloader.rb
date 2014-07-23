@@ -1,5 +1,6 @@
 require 'nokogiri'
 require 'open-uri'
+require 'terminal-notifier'
 
 def read_url url
   Nokogiri::XML(open(url).read)
@@ -39,6 +40,7 @@ if chapters.count > 0
       end
     end
   end
+  TerminalNotifier.notify("Download of \"#{manga_name}\" is over.", title: 'MangaFox Downloader', sound: 'default')
 else
   p "#{manga_name} not found :("
 end

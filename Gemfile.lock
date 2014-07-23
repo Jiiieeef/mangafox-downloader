@@ -4,9 +4,11 @@ GEM
     mini_portile (0.6.0)
     nokogiri (1.6.2.1)
       mini_portile (= 0.6.0)
+    terminal-notifier (1.6.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   nokogiri
+  terminal-notifier
