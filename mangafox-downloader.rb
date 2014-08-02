@@ -27,6 +27,8 @@ mangas.each do |manga|
 
     chapters.reverse.each do |chapter|
       name = chapter.css('.tips')[0].children[0].text
+      title = chapter.css('.title')[0].children[0].text
+      name += " - #{title}" unless title.nil?
       Dir.mkdir("Downloads/#{manga}/#{name}") unless File.exists?("Downloads/#{manga}/#{name}")
       
       chapter = chapter.css('.tips')[0].attributes["href"].value
