@@ -10,6 +10,8 @@ def get_base_url_chapter url
   "#{url.split('/')[0...-1].join('/')}/"
 end
 
+Dir.mkdir("Downloads") unless Dir.exists?("Downloads")
+
 mangas = ARGV
 
 mangas.each do |manga|
@@ -21,11 +23,11 @@ mangas.each do |manga|
 
   if chapters.count > 0
 
-    Dir.mkdir(manga) unless File.exists?(manga)
+    Dir.mkdir("Downloads/#{manga}") unless File.exists?("Downloads/#{manga}")
 
     chapters.reverse.each do |chapter|
       name = chapter.css('.tips')[0].children[0].text
-      Dir.mkdir("#{manga}/#{name}") unless File.exists?("#{manga}/#{name}")
+      Dir.mkdir("Downloads/#{manga}/#{name}") unless File.exists?("Downloads/#{manga}/#{name}")
       
       chapter = chapter.css('.tips')[0].attributes["href"].value
       base_url_chapter = get_base_url_chapter chapter
@@ -37,7 +39,7 @@ mangas.each do |manga|
         src = page.css('#viewer img#image')[0].attributes["src"].value
         extension = src.split('.')[src.split('.').count - 1]
 
-        open("#{manga}/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
+        open("Downloads/#{manga}/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
           p file
           file << open(src).read
         end
