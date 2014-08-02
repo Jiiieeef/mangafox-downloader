@@ -10,13 +10,19 @@ def get_base_url_chapter url
   "#{url.split('/')[0...-1].join('/')}/"
 end
 
+def slugify manga
+  slug = manga.gsub(/[\s+.!'"-]/, "_").downcase
+  slug = slug[0...-1] if slug[slug.size - 1] == "_"
+  slug
+end
+
 Dir.mkdir("Downloads") unless Dir.exists?("Downloads")
 
 mangas = ARGV
 
 mangas.each do |manga|
 
-  manga_slug = manga.gsub(/\s+/, "_").downcase
+  manga_slug = slugify manga
   manga_html = read_url "http://mangafox.me/manga/#{manga_slug}"
 
   chapters = manga_html.css('.chlist li')
