@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'open-uri'
 require 'terminal-notifier'
+require 'zip'
 
 def read_url url
   Nokogiri::XML(open(url).read)
@@ -16,7 +17,7 @@ def slugify manga
   slug
 end
 
-Dir.mkdir("Downloads") unless Dir.exists?("Downloads")
+Dir.mkdir("Downloads") unless Dir.exist?("Downloads")
 
 mangas = ARGV
 
@@ -29,13 +30,13 @@ mangas.each do |manga|
 
   if chapters.count > 0
 
-    Dir.mkdir("Downloads/#{manga}") unless File.exists?("Downloads/#{manga}")
+    Dir.mkdir("Downloads/#{manga}") unless File.exist?("Downloads/#{manga}")
 
     chapters.reverse.each do |chapter|
       name = chapter.css('.tips')[0].children[0].text
       title = chapter.css('.title')[0].children[0].text
       name += " - #{title}" unless title.nil?
-      Dir.mkdir("Downloads/#{manga}/#{name}") unless File.exists?("Downloads/#{manga}/#{name}")
+      Dir.mkdir("Downloads/#{manga}/#{name}") unless File.exist?("Downloads/#{manga}/#{name}")
       
       chapter = chapter.css('.tips')[0].attributes["href"].value
       base_url_chapter = get_base_url_chapter chapter
