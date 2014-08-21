@@ -17,6 +17,15 @@ def slugify manga
   slug
 end
 
+def zip_chapter pages, path_to_pages
+  Zip::File.open("#{path_to_pages}.cbz", Zip::File::CREATE) do |zipfile|
+    pages.each do |filename|
+      zipfile.add(filename.split('/').last, filename)
+    end
+    p "#{path_to_pages} is zipped"
+  end
+end
+
 Dir.mkdir("Downloads") unless Dir.exist?("Downloads")
 
 mangas = ARGV
@@ -53,6 +62,7 @@ mangas.each do |manga|
           file << open(src).read
         end
       end
+      zip_chapter Dir["Downloads/#{manga}/#{name}/*"], "Downloads/#{manga}/#{name}"
     end
     TerminalNotifier.notify("Download of \"#{manga}\" is over.", title: 'MangaFox Downloader', sound: 'default')
   else
