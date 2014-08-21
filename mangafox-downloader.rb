@@ -2,6 +2,7 @@ require 'nokogiri'
 require 'open-uri'
 require 'terminal-notifier'
 require 'zip'
+require 'yaml'
 
 def read_url url
   Nokogiri::XML(open(url).read)
@@ -25,7 +26,10 @@ def zip_chapter pages, path_to_pages
     end
     p "#{path_to_pages} is zipped"
   end
+  FileUtils.rm_rf("#{path_to_pages}") if $config["zip"]["delete_folders_after_archive"]
 end
+
+$config = YAML.load_file('config.yml')
 
 Dir.mkdir("Downloads") unless Dir.exist?("Downloads")
 
@@ -63,9 +67,9 @@ mangas.each do |manga|
           file << open(src).read
         end
       end
-      zip_chapter Dir["Downloads/#{manga}/#{name}/*"], "Downloads/#{manga}/#{name}"
+      zip_chapter Dir["Downloads/#{manga}/#{name}/*"], "Downloads/#{manga}/#{name}" if $config["zip"]["should_archive"]
     end
-    TerminalNotifier.notify("Download of \"#{manga}\" is over.", title: 'MangaFox Downloader', sound: 'default')
+    TerminalNotifier.notify("Download of \"#{manga}\" is over.", title: 'MangaFox Downloader', sound: 'default') if $config["notification"]["should_notify"]
   else
     p "#{manga} not found :("
   end

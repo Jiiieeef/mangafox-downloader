@@ -1,0 +1,5 @@
+zip:
+  should_archive: true
+  delete_folders_after_archive: true
+notification:
+  should_notify: true
