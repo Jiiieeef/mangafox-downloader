@@ -18,6 +18,7 @@ def slugify manga
 end
 
 def zip_chapter pages, path_to_pages
+  FileUtils.rm_rf("#{path_to_pages}.cbz") if File.exist?("#{path_to_pages}.cbz")
   Zip::File.open("#{path_to_pages}.cbz", Zip::File::CREATE) do |zipfile|
     pages.each do |filename|
       zipfile.add(filename.split('/').last, filename)
