@@ -30,8 +30,9 @@ def zip_chapter pages, path_to_pages
 end
 
 $config = YAML.load_file('config.yml')
+download_path = $config["path_to_create"]
 
-Dir.mkdir("Downloads") unless Dir.exist?("Downloads")
+Dir.mkdir(download_path) unless Dir.exist?(download_path)
 
 mangas = ARGV
 
@@ -44,13 +45,13 @@ mangas.each do |manga|
 
   if chapters.count > 0
 
-    Dir.mkdir("Downloads/#{manga}") unless File.exist?("Downloads/#{manga}")
+    Dir.mkdir("#{download_path}/#{manga}") unless File.exist?("#{download_path}/#{manga}")
 
     chapters.reverse.each do |chapter|
       name = chapter.css('.tips')[0].children[0].text
       title = chapter.css('.title')[0].children[0].text
       name += " - #{title}" unless title.nil?
-      Dir.mkdir("Downloads/#{manga}/#{name}") unless File.exist?("Downloads/#{manga}/#{name}")
+      Dir.mkdir("#{download_path}/#{manga}/#{name}") unless File.exist?("#{download_path}/#{manga}/#{name}")
       
       chapter = chapter.css('.tips')[0].attributes["href"].value
       base_url_chapter = get_base_url_chapter chapter
@@ -62,12 +63,12 @@ mangas.each do |manga|
         src = page.css('#viewer img#image')[0].attributes["src"].value
         extension = src.split('.')[src.split('.').count - 1]
 
-        open("Downloads/#{manga}/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
+        open("#{download_path}/#{manga}/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
           p file
           file << open(src).read
         end
       end
-      zip_chapter Dir["Downloads/#{manga}/#{name}/*"], "Downloads/#{manga}/#{name}" if $config["zip"]["should_archive"]
+      zip_chapter Dir["#{download_path}/#{manga}/#{name}/*"], "#{download_path}/#{manga}/#{name}" if $config["zip"]["should_archive"]
     end
     TerminalNotifier.notify("Download of \"#{manga}\" is over.", title: 'MangaFox Downloader', sound: 'default') if $config["notification"]["should_notify"]
   else
