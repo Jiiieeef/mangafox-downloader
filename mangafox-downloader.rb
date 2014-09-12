@@ -3,6 +3,7 @@ require 'open-uri'
 require 'terminal-notifier'
 require 'zip'
 require 'yaml'
+require './classes'
 
 def read_url url
   Nokogiri::XML(open(url).read)
@@ -10,12 +11,6 @@ end
 
 def get_base_url_chapter url
   "#{url.split('/')[0...-1].join('/')}/"
-end
-
-def slugify manga
-  slug = manga.gsub(" - ","_").gsub(/[\s+.!'"-]/, "_").downcase
-  slug = slug[0...-1] if slug[slug.size - 1] == "_"
-  slug
 end
 
 def zip_chapter pages, path_to_pages
@@ -34,39 +29,50 @@ download_path = $config["path_to_create"]
 
 Dir.mkdir(download_path) unless Dir.exist?(download_path)
 
-manga_slug = slugify ARGV[0]
-manga_html = read_url "http://mangafox.me/manga/#{manga_slug}"
+manga = Manga.new ARGV[0]
+manga_html = read_url "http://mangafox.me/manga/#{manga.name_slugified}"
 
 chapters = manga_html.css('.chlist li')
 
 if chapters.count > 0
 
-  Dir.mkdir("#{download_path}/#{manga}") unless File.exist?("#{download_path}/#{manga}")
-
   chapters.reverse.each do |chapter|
+
     name = chapter.css('.tips')[0].children[0].text
-    title = chapter.css('.title')[0].children[0].text
-    name += " - #{title}" unless title.nil?
-    Dir.mkdir("#{download_path}/#{manga}/#{name}") unless File.exist?("#{download_path}/#{manga}/#{name}")
+    if chapter.css('.title').size > 0
+      title = chapter.css('.title')[0].children[0].text
+      name += " - #{title}"
+    end
     
     chapter = chapter.css('.tips')[0].attributes["href"].value
     base_url_chapter = get_base_url_chapter chapter
+    chapter = Chapter.new name, base_url_chapter
+
     flux = read_url "#{base_url_chapter}1.html"
     flux.css('#top_center_bar .l select option')[0...-1].each do |option|
       
       page = read_url "#{base_url_chapter}#{option.attributes["value"].value}.html"
+      url_image = page.css('#viewer img#image')[0].attributes["src"].value
+      extension = url_image.split('.')[url_image.split('.').count - 1]
       
-      src = page.css('#viewer img#image')[0].attributes["src"].value
-      extension = src.split('.')[src.split('.').count - 1]
-
-      open("#{download_path}/#{manga}/#{name}/page-#{option.attributes["value"].value}.#{extension}",'wb') do |file|
-        p file
-        file << open(src).read
-      end
+      page = Page.new url_image, "Downloads/#{manga.name}/#{name}/page-#{option.attributes["value"].value}.#{extension}"
+      chapter.pages << page
     end
-    zip_chapter Dir["#{download_path}/#{manga}/#{name}/*"], "#{download_path}/#{manga}/#{name}" if $config["zip"]["should_archive"]
+    manga.chapters << chapter
+
   end
-  TerminalNotifier.notify("Download of \"#{manga}\" is over.", title: 'MangaFox Downloader', sound: 'default') if $config["notification"]["should_notify"]
+  Dir.mkdir("#{download_path}/#{manga.name}") unless File.exists?("#{download_path}/#{manga.name}")
+  manga.chapters.each do |chapter|
+    Dir.mkdir("#{download_path}/#{manga.name}/#{chapter.name}") unless File.exists?("#{download_path}/#{manga.name}/#{chapter.name}")
+    chapter.pages.each_with_index do |page, index|
+      open(page.path_image,'wb') do |file|
+       p file
+       file << open(page.url_image).read
+     end
+    end
+    zip_chapter Dir["#{download_path}/#{manga.name}/#{chapter.name}/*"], "#{download_path}/#{manga.name}/#{chapter.name}" if $config["zip"]["should_archive"]
+  end
+  TerminalNotifier.notify("Download of \"#{manga.name}\" is over.", title: 'MangaFox Downloader', sound: 'default') if $config["notification"]["should_notify"]
 else
   p "#{manga} not found :("
 end
