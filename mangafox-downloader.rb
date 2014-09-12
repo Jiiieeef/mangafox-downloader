@@ -13,7 +13,7 @@ def get_base_url_chapter url
 end
 
 def slugify manga
-  slug = manga.gsub(/[\s+.!'"-]/, "_").downcase
+  slug = manga.gsub(" - ","_").gsub(/[\s+.!'"-]/, "_").downcase
   slug = slug[0...-1] if slug[slug.size - 1] == "_"
   slug
 end
