@@ -24,18 +24,23 @@ def zip_chapter pages, path_to_pages
   FileUtils.rm_rf("#{path_to_pages}") if $config["zip"]["delete_folders_after_archive"]
 end
 
+def name_slugified name
+  slug = name.gsub(" - ","_").gsub(/[\s+.!'"-:]/, "_").downcase
+  slug = slug[0...-1] if slug[slug.size - 1] == "_"
+  slug
+end
+
 $config = YAML.load_file('config.yml')
 download_path = $config["path_to_create"]
 
 Dir.mkdir(download_path) unless Dir.exist?(download_path)
 
-manga = Manga.new ARGV[0]
-manga_html = read_url "http://mangafox.me/manga/#{manga.name_slugified}"
+manga_name = ARGV[0]
+manga_html = read_url "http://mangafox.me/manga/#{name_slugified(manga_name)}"
 
-chapters = manga_html.css('.chlist li')
-
-if chapters.count > 0
-
+if manga_html.css('#searchform').size == 0
+  manga = Manga.new manga_name
+  chapters = manga_html.css('.chlist li')
   chapters.reverse.each do |chapter|
 
     name = chapter.css('.tips')[0].children[0].text
@@ -77,7 +82,7 @@ else
   p "#{manga} not found :("
   p "But I will do a research for you ;)"
 
-  encoded_name = URI.encode manga.name
+  encoded_name = URI.encode manga_name
   search_result = read_url("http://mangafox.me/search.php?name_method=cw&name=#{encoded_name}&type=&author_method=cw&author=&artist_method=cw&artist=&genres%5BAction%5D=0&genres%5BAdult%5D=0&genres%5BAdventure%5D=0&genres%5BComedy%5D=0&genres%5BDoujinshi%5D=0&genres%5BDrama%5D=0&genres%5BEcchi%5D=0&genres%5BFantasy%5D=0&genres%5BGender+Bender%5D=0&genres%5BHarem%5D=0&genres%5BHistorical%5D=0&genres%5BHorror%5D=0&genres%5BJosei%5D=0&genres%5BMartial+Arts%5D=0&genres%5BMature%5D=0&genres%5BMecha%5D=0&genres%5BMystery%5D=0&genres%5BOne+Shot%5D=0&genres%5BPsychological%5D=0&genres%5BRomance%5D=0&genres%5BSchool+Life%5D=0&genres%5BSci-fi%5D=0&genres%5BSeinen%5D=0&genres%5BShoujo%5D=0&genres%5BShoujo+Ai%5D=0&genres%5BShounen%5D=0&genres%5BShounen+Ai%5D=0&genres%5BSlice+of+Life%5D=0&genres%5BSmut%5D=0&genres%5BSports%5D=0&genres%5BSupernatural%5D=0&genres%5BTragedy%5D=0&genres%5BWebtoons%5D=0&genres%5BYaoi%5D=0&genres%5BYuri%5D=0&released_method=eq&released=&rating_method=eq&rating=&is_completed=&advopts=1")
   search_result.css('#listing tr:not(:first)').each do |result|
     p result.css('td:first a').text
