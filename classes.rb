@@ -8,7 +8,7 @@ class Manga
   end
 
   def name_slugified
-    slug = @name.gsub(" - ","_").gsub(/[\s+.!'"-:]/, "_").downcase
+    slug = @name.gsub(" - ","_").gsub(/[\s+.!^'"-:\/]/, "_").downcase
     slug = slug[0...-1] if slug[slug.size - 1] == "_"
     slug
   end

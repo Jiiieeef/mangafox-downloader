@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    highline (1.6.21)
     mini_portile (0.6.0)
     nokogiri (1.6.2.1)
       mini_portile (= 0.6.0)
@@ -11,6 +12,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  highline
   nokogiri
   rubyzip (>= 1.0.0)
   terminal-notifier
