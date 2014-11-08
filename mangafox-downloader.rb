@@ -38,7 +38,21 @@ def download_manga manga_name, manga_name_slugified
 
   manga = Manga.new manga_name
   manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
-  chapters = manga_html.css('.chlist li')
+
+  p "Choose if you want to download all volumes or only one:"
+  p "1. All volumes"
+  manga_html.css('.volume').reverse.each_with_index do |volume, index|
+    p "#{index + 2}. #{volume.text}"
+  end
+  input = ask("Which one must I download ? (set number) :", Integer) { |i| i.in = 1..(manga_html.css('.volume').size + 1) }
+  if input == 1
+    p "All volumes"
+    chapters = manga_html.css('.chlist li')
+  else
+    p "Volume #{input - 1}"
+    chapters = manga_html.css(".chlist").reverse[input - 2].css('li')
+  end
+
   chapters.reverse.each do |chapter|
 
     name = chapter.css('.tips')[0].children[0].text
