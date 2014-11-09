@@ -31,6 +31,20 @@ def name_slugified name
   slug
 end
 
+def thread_action chapters, &block
+  queue = Queue.new
+  chapters.map { |arr| queue << arr }
+
+  threads = $config["parallel_thread"].times.map do
+    Thread.new do
+      while !queue.empty? && chapter = chapters.pop
+        yield(chapter)
+      end
+    end
+  end
+  threads.each(&:join)
+end
+
 def download_manga manga_name, manga_name_slugified
 
   download_path = $config["path_to_create"]
@@ -53,63 +67,42 @@ def download_manga manga_name, manga_name_slugified
     chapters = manga_html.css(".chlist").reverse[input - 1].css('li')
   end
 
-
-  queue = Queue.new
-  chapters.map { |chapter| queue << chapter }
-  
-  threads = $config["parallel_thread"].times.map do
-    Thread.new do
-      while !queue.empty? && chapter = chapters.pop
-        
-        name = chapter.css('.tips')[0].children[0].text
-        if chapter.css('.title').size > 0
-          title = chapter.css('.title')[0].children[0].text
-          name += " - #{title}"
-        end
-        
-        chapter = chapter.css('.tips')[0].attributes["href"].value
-        base_url_chapter = get_base_url_chapter chapter
-        chapter = Chapter.new name, base_url_chapter
-
-        flux = read_url "#{base_url_chapter}1.html"
-        flux.css('#top_center_bar .l select option')[0...-1].each do |option|
-          
-          page = read_url "#{base_url_chapter}#{option.attributes["value"].value}.html"
-          url_image = page.css('#viewer img#image')[0].attributes["src"].value
-          extension = url_image.split('.')[url_image.split('.').count - 1]
-          
-          page = Page.new url_image, "Downloads/#{manga.name}/#{name}/page-#{option.attributes["value"].value}.#{extension}"
-          chapter.pages << page
-        end
-        manga.chapters << chapter
-
-      end
+  thread_action chapters do |chapter|
+    name = chapter.css('.tips')[0].children[0].text
+    if chapter.css('.title').size > 0
+      title = chapter.css('.title')[0].children[0].text
+      name += " - #{title}"
     end
+    
+    chapter = chapter.css('.tips')[0].attributes["href"].value
+    base_url_chapter = get_base_url_chapter chapter
+    chapter = Chapter.new name, base_url_chapter
+
+    flux = read_url "#{base_url_chapter}1.html"
+    flux.css('#top_center_bar .l select option')[0...-1].each do |option|
+      
+      page = read_url "#{base_url_chapter}#{option.attributes["value"].value}.html"
+      url_image = page.css('#viewer img#image')[0].attributes["src"].value
+      extension = url_image.split('.')[url_image.split('.').count - 1]
+      
+      page = Page.new url_image, "Downloads/#{manga.name}/#{name}/page-#{option.attributes["value"].value}.#{extension}"
+      chapter.pages << page
+    end
+    manga.chapters << chapter
   end
-  threads.each(&:join)
 
 
   Dir.mkdir("#{download_path}/#{manga.name}") unless File.exists?("#{download_path}/#{manga.name}")
-
-  queue = Queue.new
-  manga.chapters.map { |chapter| queue << chapter }
-
-  threads = $config["parallel_thread"].times.map do
-    Thread.new do
-      while !queue.empty? && chapter = manga.chapters.pop
-        Dir.mkdir("#{download_path}/#{manga.name}/#{chapter.name}") unless File.exists?("#{download_path}/#{manga.name}/#{chapter.name}")
-        chapter.pages.each_with_index do |page, index|
-          open(page.path_image,'wb') do |file|
-           p file
-           file << open(page.url_image).read
-         end
-        end
-        zip_chapter Dir["#{download_path}/#{manga.name}/#{chapter.name}/*"], "#{download_path}/#{manga.name}/#{chapter.name}" if $config["zip"]["should_archive"]
-        
-      end
+  thread_action manga.chapters do |chapter|
+    Dir.mkdir("#{download_path}/#{manga.name}/#{chapter.name}") unless File.exists?("#{download_path}/#{manga.name}/#{chapter.name}")
+    chapter.pages.each_with_index do |page, index|
+      open(page.path_image,'wb') do |file|
+       p file
+       file << open(page.url_image).read
+     end
     end
+    zip_chapter Dir["#{download_path}/#{manga.name}/#{chapter.name}/*"], "#{download_path}/#{manga.name}/#{chapter.name}" if $config["zip"]["should_archive"]
   end
-  threads.each(&:join)
 
   TerminalNotifier.notify("Download of \"#{manga.name}\" is over.", title: 'MangaFox Downloader', sound: 'default') if $config["notification"]["should_notify"]
 end
