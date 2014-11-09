@@ -80,26 +80,36 @@ def download_manga manga_name, manga_name_slugified
 
     flux = read_url "#{base_url_chapter}1.html"
     flux.css('#top_center_bar .l select option')[0...-1].each do |option|
-      
-      page = read_url "#{base_url_chapter}#{option.attributes["value"].value}.html"
-      url_image = page.css('#viewer img#image')[0].attributes["src"].value
-      extension = url_image.split('.')[url_image.split('.').count - 1]
-      
-      page = Page.new url_image, "Downloads/#{manga.name}/#{name}/page-#{option.attributes["value"].value}.#{extension}"
-      chapter.pages << page
+      begin
+        page = read_url "#{base_url_chapter}#{option.attributes["value"].value}.html"
+        url_image = page.css('#viewer img#image')[0].attributes["src"].value
+        extension = url_image.split('.')[url_image.split('.').count - 1]
+        
+        page = Page.new url_image, "Downloads/#{manga.name}/#{name}/page-#{option.attributes["value"].value}.#{extension}"
+        chapter.pages << page
+      rescue
+        p "----------------------------------"
+        p "#{base_url_chapter}#{option.attributes["value"].value}.html has fail"
+        p "----------------------------------"
+      end
     end
     manga.chapters << chapter
   end
-
 
   Dir.mkdir("#{download_path}/#{manga.name}") unless File.exists?("#{download_path}/#{manga.name}")
   thread_action manga.chapters do |chapter|
     Dir.mkdir("#{download_path}/#{manga.name}/#{chapter.name}") unless File.exists?("#{download_path}/#{manga.name}/#{chapter.name}")
     chapter.pages.each_with_index do |page, index|
-      open(page.path_image,'wb') do |file|
-       p file
-       file << open(page.url_image).read
-     end
+      begin
+        open(page.path_image,'wb') do |file|
+         p file
+         file << open(page.url_image).read
+        end
+      rescue
+        p "========================================="
+        p "#{page.path_image} has fail"
+        p "========================================="
+      end
     end
     zip_chapter Dir["#{download_path}/#{manga.name}/#{chapter.name}/*"], "#{download_path}/#{manga.name}/#{chapter.name}" if $config["zip"]["should_archive"]
   end
