@@ -57,7 +57,7 @@ def download_manga manga_name, manga_name_slugified
   queue = Queue.new
   chapters.map { |chapter| queue << chapter }
   
-  threads = 10.times.map do
+  threads = $config["parallel_thread"].times.map do
     Thread.new do
       while !queue.empty? && chapter = chapters.pop
         
@@ -94,7 +94,7 @@ def download_manga manga_name, manga_name_slugified
   queue = Queue.new
   manga.chapters.map { |chapter| queue << chapter }
 
-  threads = 10.times.map do
+  threads = $config["parallel_thread"].times.map do
     Thread.new do
       while !queue.empty? && chapter = manga.chapters.pop
         Dir.mkdir("#{download_path}/#{manga.name}/#{chapter.name}") unless File.exists?("#{download_path}/#{manga.name}/#{chapter.name}")

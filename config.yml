@@ -4,3 +4,4 @@ zip:
 notification:
   should_notify: true
 path_to_create: "Downloads"
+parallel_thread: 10
