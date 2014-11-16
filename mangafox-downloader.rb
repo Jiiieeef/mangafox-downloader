@@ -69,10 +69,6 @@ def download_manga manga_name, manga_name_slugified
 
   thread_action chapters do |chapter|
     name = chapter.css('.tips')[0].children[0].text
-    if chapter.css('.title').size > 0
-      title = chapter.css('.title')[0].children[0].text
-      name += " - #{title}"
-    end
     
     chapter = chapter.css('.tips')[0].attributes["href"].value
     base_url_chapter = get_base_url_chapter chapter
