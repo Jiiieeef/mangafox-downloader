@@ -16,11 +16,17 @@ end
 
 def zip_chapter pages, path_to_pages
   FileUtils.rm_rf("#{path_to_pages}.cbz") if File.exist?("#{path_to_pages}.cbz")
-  Zip::File.open("#{path_to_pages}.cbz", Zip::File::CREATE) do |zipfile|
-    pages.each do |filename|
-      zipfile.add(filename.split('/').last, filename)
+  begin
+    Zip::File.open("#{path_to_pages}.cbz", Zip::File::CREATE) do |zipfile|
+      pages.each do |filename|
+        zipfile.add(filename.split('/').last, filename)
+      end
+      p "#{path_to_pages} is zipped"
     end
-    p "#{path_to_pages} is zipped"
+  rescue
+    p "========================================="
+    p "#{path_to_pages} has fail to zip"
+    p "========================================="
   end
   FileUtils.rm_rf("#{path_to_pages}") if $config["zip"]["delete_folders_after_archive"]
 end
