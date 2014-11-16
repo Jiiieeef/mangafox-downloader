@@ -133,24 +133,20 @@ $har_error = false
 case ARGV.size
   when 0
     manga_name = ask("Name of the manga:", String)
-    manga_name_slugified = name_slugified(manga_name)
-    manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
     chapters = nil
   when 1
     manga_name = ARGV[0]
-    manga_name_slugified = name_slugified(manga_name)
-    manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
     chapters = nil
   else
     manga_name = ARGV[0]
-    manga_name_slugified = name_slugified(manga_name)
-    manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
     ARGV.shift
     chapters = ARGV
 end
 
-if manga_html.css('#searchform').size == 0
+manga_name_slugified = name_slugified(manga_name)
+manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
 
+if manga_html.css('#searchform').size == 0
   download_manga manga_name, manga_name_slugified, chapters
 else
   p "#{manga_name} not found :(\nBut I will do a research for you ;)"
