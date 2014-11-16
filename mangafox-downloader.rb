@@ -93,7 +93,7 @@ def download_manga manga_name, manga_name_slugified
   end
 
   Dir.mkdir("#{download_path}/#{manga.name}") unless File.exists?("#{download_path}/#{manga.name}")
-  thread_action manga.chapters do |chapter|
+  thread_action manga.chapters.reverse do |chapter|
     Dir.mkdir("#{download_path}/#{manga.name}/#{chapter.name}") unless File.exists?("#{download_path}/#{manga.name}/#{chapter.name}")
     chapter.pages.each_with_index do |page, index|
       begin
