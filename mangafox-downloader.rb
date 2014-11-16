@@ -51,7 +51,7 @@ def thread_action chapters, &block
   threads.each(&:join)
 end
 
-def download_manga manga_name, manga_name_slugified
+def download_manga manga_name, manga_name_slugified, chapters_ids = nil
 
   download_path = $config["path_to_create"]
   Dir.mkdir(download_path) unless Dir.exist?(download_path)
@@ -59,18 +59,27 @@ def download_manga manga_name, manga_name_slugified
   manga = Manga.new manga_name
   manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
 
-  p "Choose if you want to download all volumes or only one:"
-  manga_html.css('.volume').reverse.each_with_index do |volume, index|
-    p "#{index + 1}. #{volume.text}"
-  end
-  p "#{manga_html.css('.volume').size + 1}. All volumes"
-  input = ask("Which one must I download ? (set number) :", Integer) { |i| i.in = 1..(manga_html.css('.volume').size + 1) }
-  if input == (manga_html.css('.volume').size + 1)
-    p "All volumes"
-    chapters = manga_html.css('.chlist li')
+  if chapters_ids
+    chapters = []
+    chapters_ids.each do |chapter_id|
+      manga_html.css(".chlist").reverse[chapter_id.to_i - 1].css('li').each do |chapter|
+        chapters << chapter
+      end
+    end
   else
-    p "Volume #{input}"
-    chapters = manga_html.css(".chlist").reverse[input - 1].css('li')
+    p "Choose if you want to download all volumes or only one:"
+    manga_html.css('.volume').reverse.each_with_index do |volume, index|
+      p "#{index + 1}. #{volume.text}"
+    end
+    p "#{manga_html.css('.volume').size + 1}. All volumes"
+    input = ask("Which one must I download ? (set number) :", Integer) { |i| i.in = 1..(manga_html.css('.volume').size + 1) }
+    if input == (manga_html.css('.volume').size + 1)
+      p "All volumes"
+      chapters = manga_html.css('.chlist li')
+    else
+      p "Volume #{input}"
+      chapters = manga_html.css(".chlist").reverse[input - 1].css('li')
+    end
   end
 
   thread_action chapters do |chapter|
@@ -123,17 +132,26 @@ $config = YAML.load_file('config.yml')
 $har_error = false
 case ARGV.size
   when 0
-    manga_name = ask("Name of the manga", String)
+    manga_name = ask("Name of the manga:", String)
     manga_name_slugified = name_slugified(manga_name)
     manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
+    chapters = nil
   when 1
     manga_name = ARGV[0]
     manga_name_slugified = name_slugified(manga_name)
     manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
+    chapters = nil
+  else
+    manga_name = ARGV[0]
+    manga_name_slugified = name_slugified(manga_name)
+    manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
+    ARGV.shift
+    chapters = ARGV
 end
 
 if manga_html.css('#searchform').size == 0
-  download_manga manga_name, manga_name_slugified
+
+  download_manga manga_name, manga_name_slugified, chapters
 else
   p "#{manga_name} not found :(\nBut I will do a research for you ;)"
   
