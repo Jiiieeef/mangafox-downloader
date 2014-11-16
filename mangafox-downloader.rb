@@ -120,10 +120,17 @@ def download_manga manga_name, manga_name_slugified
 end
 
 $config = YAML.load_file('config.yml')
-
-manga_name = ARGV[0]
-manga_name_slugified = name_slugified(manga_name)
-manga_html = read_url "http://mangafox.me/manga/#{name_slugified(manga_name)}"
+$har_error = false
+case ARGV.size
+  when 0
+    manga_name = ask("Name of the manga", String)
+    manga_name_slugified = name_slugified(manga_name)
+    manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
+  when 1
+    manga_name = ARGV[0]
+    manga_name_slugified = name_slugified(manga_name)
+    manga_html = read_url "http://mangafox.me/manga/#{manga_name_slugified}"
+end
 
 if manga_html.css('#searchform').size == 0
   download_manga manga_name, manga_name_slugified
